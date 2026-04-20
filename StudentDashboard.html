@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard | IIITDM Kurnool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/StudentDashboard.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+
+  <!-- LEFT: Hamburger -->
+  
+
+  <!-- RIGHT: Logo -->
+  <div class="nav-logo">
+    <img src="/assets/iiitdmk_logo.png" class="logo">
+    <span>IIITDM Kurnool</span>
+  </div>
+
+  <!-- MENU -->
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#home">🏠 Home</a></li>
+    <li><a href="#profile">👤 Profile</a></li>
+    <li><a href="#markAttendance">📍 Mark Attendance</a></li>
+    <li><a href="#attendance">📊 Attendance</a></li>
+    <li><button id="logoutBtn">🚪 Logout</button></li>
+  </ul>
+
+</div>
+  <!-- Home Section -->
+  <section class="section home" id="home">
+    <h1>Welcome, <span id="studentName"></span></h1>
+    <div class="calendar-container">
+      <div class="calendar-header">
+        <button id="prevMonth">&#10094;</button>
+        <div id="monthYear"></div>
+        <button id="nextMonth">&#10095;</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </section>
+
+  <!-- Profile Section -->
+  <section class="section profile hidden" id="profile">
+    <!-- Dynamic content will be inserted here -->
+  </section>
+
+
+  <section class="section attendance hidden" id="attendance">
+  <h1>Attendance</h1>
+  <div id="attendanceContent"></div>
+</section>
+
+<!-- ✅ ADD HERE (OUTSIDE SCRIPT) -->
+<section class="section hidden" id="markAttendance">
+  <h1>Mark Attendance</h1>
+
+  <div id="currentClassInfo"></div>
+
+  <button id="markBtn" onclick="openAndroidApp()">Mark Attendance</button>
+</section>
+
+  <script>
+  // ------------------- Get Student Info from URL -------------------
+  const params = new URLSearchParams(window.location.search);
+  const studentRoll = params.get('roll');
+  let studentYear = "";
+  let isStudentLoaded = false;
+
+  if (studentRoll) {
+    fetch(`/api/student/${studentRoll}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        // Update Home Greeting
+        document.getElementById('studentName').textContent = data.fullname;
+
+        studentYear = data.year;
+        // Update Profile Section
+        isStudentLoaded = true;
+        checkCurrentClass();
+        const profileSection = document.getElementById('profile');
+        profileSection.innerHTML = `
+          <h1>Profile</h1>
+          <div class="profile-card">
+            <div class="profile-photo">
+              ${data.photo ? `<img src="${data.photo}" alt="Profile Photo">` : `<div class="no-photo">No Photo</div>`}
+            </div>
+            <div class="profile-info">
+              <p><strong>Name:</strong> ${data.fullname}</p>
+              <p><strong>Roll No:</strong> ${data.roll}</p>
+              <p><strong>Email:</strong> ${data.email}</p>
+              <p><strong>Year:</strong> ${data.year}</p>
+            </div>
+          </div>
+        `;
+      })
+      .catch(err => console.error("Error fetching student data:", err));
+  }
+
+
+   const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+
+async function scanBeacon() {
+  try {
+
+    // 1. Call backend directly after scanning confirmation
+    // (Assume Android BLE already verified beacon)
+
+    const res = await fetch("/api/mark-attendance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        roll: studentRoll,
+        name: document.getElementById('studentName').textContent,
+        course: window.currentCourse,
+        faculty_id: window.currentFaculty
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("✅ Attendance marked successfully!");
+      loadStudentAttendance(studentRoll);
+    } else {
+      alert(data.message || "Failed");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+}
+
+function openAndroidApp() {
+  const roll = studentRoll;
+  const course = window.currentCourse;
+  const faculty = window.currentFaculty;
+
+  // Deep link to Android app
+  window.location.href =
+    `bleattendance://mark?roll=${roll}&course=${course}&faculty=${faculty}`;
+}
+
+  // ------------------- Fetch Attendance -------------------
+  async function loadStudentAttendance(roll) {
+    if (!roll) return;
+
+    try {
+      const res = await fetch(`/api/student-attendance/${roll}`);
+      const data = await res.json();
+
+      const container = document.getElementById('attendanceContent');
+
+      if (data.error) {
+        container.innerHTML = `<p>${data.error}</p>`;
+        return;
+      }
+
+      if (!data.length) {
+        container.innerHTML = `<p>No attendance records found.</p>`;
+        return;
+      }
+
+      // Create table
+      let tableHTML = `
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Attendance Count</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(record => {
+        tableHTML += `
+          <tr>
+            <td>${record.course}</td>
+            <td>${record.count}</td>
+            <td>${record.last_date ? new Date(record.last_date).toLocaleDateString() : '-'}</td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `</tbody></table>`;
+      container.innerHTML = tableHTML;
+
+    } catch (err) {
+      console.error("Error fetching attendance:", err);
+      document.getElementById('attendanceContent').innerHTML = `<p>Failed to load attendance.</p>`;
+    }
+  }
+
+  // Call this when page loads or when Attendance tab is clicked
+  document.querySelector('a[href="#attendance"]').addEventListener('click', () => {
+    loadStudentAttendance(studentRoll);
+  });
+  // ------------------- Navigation -------------------
+  const sections = document.querySelectorAll('.section');
+
+
+  document.querySelectorAll('.nav-links li a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    sections.forEach(sec => sec.classList.add('hidden'));
+    const target = document.querySelector(link.getAttribute('href'));
+    target.classList.remove('hidden');
+
+    // ❌ REMOVE THIS if exists anywhere
+    // navLinks.classList.remove("active");
+  });
+});
+
+  // ------------------- Calendar -------------------
+  const calendarGrid = document.getElementById('calendarGrid');
+  const monthYear = document.getElementById('monthYear');
+  const prevBtn = document.getElementById('prevMonth');
+  const nextBtn = document.getElementById('nextMonth');
+  let currentDate = new Date();
+
+  function generateCalendar(date) {
+    calendarGrid.innerHTML = '';
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    monthYear.textContent = `${date.toLocaleString('default', { month: 'long' })} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    weekdays.forEach(day => {
+      const dayHeader = document.createElement('div');
+      dayHeader.textContent = day;
+      dayHeader.classList.add('day-header');
+      calendarGrid.appendChild(dayHeader);
+    });
+
+    for(let i = 0; i < firstDay; i++){
+      const blank = document.createElement('div');
+      calendarGrid.appendChild(blank);
+    }
+
+    for(let day = 1; day <= lastDate; day++){
+      const dayCell = document.createElement('div');
+      dayCell.textContent = day;
+      dayCell.classList.add('day-cell');
+      const today = new Date();
+      if(day === today.getDate() && month === today.getMonth() && year === today.getFullYear()){
+        dayCell.classList.add('today');
+      }
+      calendarGrid.appendChild(dayCell);
+    }
+  }
+
+  prevBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    generateCalendar(currentDate);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    generateCalendar(currentDate);
+  });
+
+  generateCalendar(currentDate);
+
+  // ------------------- Logout -------------------
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    const res = await fetch('/student-logout', {
+      method: 'GET',
+      credentials: 'include' // important to send cookies
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Logged out successfully!');
+      window.location.href = "/StudentLogin.html"; // redirect student to login
+    } else {
+      alert('Error logging out');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Server error while logging out');
+  }
+});
+
+document.querySelector('a[href="#markAttendance"]').addEventListener('click', () => {
+  if (!isStudentLoaded) {
+    alert("Please wait, loading student data...");
+    return;
+  }
+
+  checkCurrentClass();
+});
+
+function markAttendance() {
+  fetch("/current-class")
+    .then(res => res.json())
+    .then(data => {
+      if (data.active) {
+        const cls = data.class;
+
+        fetch("/api/mark-attendance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            course: cls.subject,
+            faculty_id: cls.faculty_id
+          })
+        })
+        .then(res => res.json())
+        .then(result => {
+          alert(result.success ? "Attendance Marked ✅" : result.message);
+        });
+
+      } else {
+        console.log("No active class ❌");
+      }
+    });
+}
+
+fetch("/api/check-session")
+  .then(res => res.json())
+  .then(data => {
+    if (data.loggedIn) {
+      markAttendance();
+    } else {
+      window.location.href = "/student_login";
+    }
+  });
+
+async function checkCurrentClass() {
+  try {
+    const res = await fetch(`/current-class?year=${studentYear}`);
+    const data = await res.json();
+
+    const div = document.getElementById("currentClassInfo");
+    const btn = document.getElementById("markBtn");
+
+    if (data.active) {
+      div.innerHTML = `Class: <span class="class-name">${data.class.subject}</span>`;
+
+      window.currentCourse = data.class.subject;
+      window.currentFaculty = data.class.faculty_id; // ADD THIS
+
+      btn.style.display = "block";
+    } else {
+      div.innerHTML = "No class now";
+      btn.style.display = "none";
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+  </script>
+</body>
+</html>

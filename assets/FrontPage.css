@@ -1,0 +1,124 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #e0e7ff, #f3f4ff);
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  text-align: center;
+  width: 100%;
+  max-width: 450px;
+  padding: 20px;
+}
+
+/* Logo Section */
+.logo-section img {
+  width: 100px;
+  margin-bottom: 15px;
+}
+
+.logo-section h1 {
+  font-size: 2rem;
+  color: #1e40af;
+  margin-bottom: 5px;
+}
+
+.logo-section p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 30px;
+}
+
+/* Attendance Card */
+.attendance-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.attendance-card h2 {
+  font-size: 1.5rem;
+  color: #111827;
+  margin-bottom: 5px;
+}
+
+.attendance-card p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+/* Role Buttons */
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.role {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #111827;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.role:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.role .icon {
+  font-size: 1.8rem;
+}
+
+.role .text {
+  text-align: left;
+}
+
+.role .text strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.role .text span {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Colors for Roles */
+.role.student {
+  background-color: #e0f2fe;
+}
+
+.role.admin {
+  background-color: #ede9fe;
+}
+
+.role.faculty {
+  background-color: #dcfce7;
+}
+
+/* Footer */
+footer {
+  margin-top: 30px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}

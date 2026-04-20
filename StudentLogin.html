@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Login | IIITDM Kurnool Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/StudentLogin.css">
+</head>
+<body>
+  <div class="container">
+    <div class="logo-section">
+      <img src="assets/iiitdmk_logo.png" alt="IIITDM Kurnool Logo" class="logo">
+      <h1>IIITDM Kurnool</h1>
+      <p>Indian Institute of Information Technology, Design & Manufacturing</p>
+    </div>
+
+    <div class="login-section">
+      <h2>Student Login</h2>
+      <p>Select an option to continue</p>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="form" method="POST" action="/login">
+        <input type="text" placeholder="Roll Number" name="roll" required>
+        <input type="password" placeholder="Password" name="password" required>
+        <button type="submit" class="btn">Login</button>
+        <p class="toggle-text">Don't have an account? <span id="showSignup">Signup</span></p>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signupForm" class="form hidden" method="POST" action="/signup" enctype="multipart/form-data">
+        <input type="text" placeholder="Full Name" name="fullname" required>
+        <input type="text" placeholder="Roll Number" name="roll" required>
+        <select name="year" required>
+          <option value="">Select Year</option>
+          <option value="1st Year">1st Year</option>
+          <option value="2nd Year">2nd Year</option>
+          <option value="3rd Year">3rd Year</option>
+          <option value="4th Year">4th Year</option>
+        </select>
+        <input type="email" placeholder="Email (must end with @iiitk.ac.in)" name="email" pattern=".*@iiitk\.ac\.in" required>
+        <input type="file" name="photo" accept="image/*" required>
+        <input type="password" placeholder="Password" name="password" required>
+        <input type="password" placeholder="Confirm Password" name="confirmPassword" required>
+        <button type="submit" class="btn">Register</button>
+        <p class="toggle-text">Already have an account? <span id="showLogin">Login</span></p>
+      </form>
+    </div>
+
+    <footer>
+      © 2026 IIITDM Kurnool — Attendance Management System
+    </footer>
+  </div>
+
+  <script>
+    const showSignup = document.getElementById('showSignup');
+    const showLogin = document.getElementById('showLogin');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+
+    showSignup.addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+    });
+
+    showLogin.addEventListener('click', () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+    });
+
+    signupForm.addEventListener('submit', async function(e) {
+    e.preventDefault(); // stop default form submit
+
+    const formData = new FormData(signupForm);
+
+    try {
+      const res = await fetch("/signup", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("✅ Registration successful!"); // dialog box
+        signupForm.reset();
+
+        // optional: switch to login
+        signupForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+      } else {
+        alert("❌ " + data.message);
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error during registration");
+    }
+  });
+
+  </script>
+</body>
+</html>

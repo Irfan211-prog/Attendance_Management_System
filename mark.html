@@ -1,0 +1,53 @@
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const roll = urlParams.get("roll");
+
+async function markAttendanceFlow() {
+  try {
+
+    const studentRes = await fetch(`/api/student/${roll}`, {
+      credentials: "include"
+    });
+    const student = await studentRes.json();
+
+    const classRes = await fetch(`/current-class?year=${student.year}`, {
+      credentials: "include"
+    });
+
+    Log.d("ROLL_DEBUG", "Sending roll: $roll")
+    Log.d("ROLL_DEBUG", "Course: $course")
+    Log.d("ROLL_DEBUG", "Faculty: $facultyId")
+
+    const data = await classRes.json();
+
+    if (!data.active) {
+      window.location.href = `/StudentDashboard.html?roll=${roll}`;
+      return;
+    }
+
+    const res = await fetch("/api/mark-attendance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        roll,
+        course: data.class.subject,
+        faculty_id: data.class.faculty_id
+      })
+    });
+
+    const result = await res.json();
+
+    // ⭐ ALWAYS GO BACK AFTER RESPONSE
+    alert(result.message || "Done");
+
+    window.location.href = `/StudentDashboard.html?roll=${roll}`;
+
+  } catch (err) {
+    console.error(err);
+    window.location.href = `/StudentDashboard.html?roll=${roll}`;
+  }
+}
+
+markAttendanceFlow();
+</script>

@@ -1,0 +1,306 @@
+/* --- General Reset --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Syne', sans-serif;
+}
+body {
+  background: #e6ecf9;
+  color: #333;
+}
+
+/* --- Navbar --- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a2f6d;
+  padding: 15px 30px;
+  color: #fff;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.nav-logo img.logo {
+  width: 50px;
+  border-radius: 5px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+}
+
+.nav-links li a,
+.nav-links li button {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-links li a:hover {
+  color: #ffca28;
+}
+
+/* Distinct Logout Button */
+.nav-links li button#logoutBtn {
+  background: #ff4d4d;
+  padding: 5px 15px;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.nav-links li button#logoutBtn:hover {
+  background: #ff1a1a;
+}
+
+/* --- Sections --- */
+.section {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.hidden {
+  display: none;
+}
+
+.section h1 {
+  margin-bottom: 20px;
+  color: #0a2f6d;
+}
+
+.section p {
+  margin-bottom: 10px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.attendance-table th {
+  background-color: #f0f0f0;
+}
+
+/* --- Calendar --- */
+.calendar-container {
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 900px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.calendar-header button {
+  background: #0a2f6d;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.calendar-header button:hover {
+  background: #15429f;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  width: 100%;
+}
+
+.calendar-grid div {
+  text-align: center;
+  padding: 15px 0;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.calendar-grid .day-header {
+  font-weight: 700;
+  color: #0a2f6d;
+}
+
+.calendar-grid .day-cell:hover {
+  transform: scale(1.05);
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+.calendar-grid .today {
+  background: #0a2f6d;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* --- Mark Attendance Button --- */
+#markBtn {
+  background: #28a745;   /* green */
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+#markBtn:hover {
+  background: #1e7e34;   /* darker green on hover */
+}
+
+.class-name {
+  font-weight: 900 !important;
+  color: #0a2f6d;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+/* --- Profile Card --- */
+.profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #f5f5f5;
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+}
+
+.profile-photo img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #0a2f6d;
+}
+
+.profile-photo .no-photo {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #555;
+  border: 4px solid #0a2f6d;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-info p {
+  font-size: 1.1rem;
+}
+
+.profile-info p strong {
+  color: #0a2f6d;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .navbar,
+  .nav-links {
+    flex-direction: column;
+  }
+
+  .nav-links {
+    gap: 12px;
+    align-items: center;
+  }
+
+  .section {
+    padding: 28px 18px;
+  }
+
+  .calendar-grid {
+    gap: 6px;
+  }
+
+  .calendar-grid div {
+    padding: 12px 0;
+    font-size: 0.9rem;
+  }
+
+  /* Keep table usable on narrow screens */
+  .attendance-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 700px) {
+  .profile-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-info {
+    margin-top: 15px;
+  }
+
+  .calendar-grid div {
+    padding: 10px 0;
+  }
+}

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Faculty Dashboard | IIITDM Kurnool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/FacultyDashboard.css">
+  <style>
+    .faculty-photo {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      margin-bottom: 10px;
+      border-radius: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+  <div class="nav-logo">
+    <img src="/assets/iiitdmk_logo.png" class="logo">
+    <span>IIITDM Kurnool</span>
+  </div>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#home">🏠 Home</a></li>
+    <li><a href="#profile">👤 Profile</a></li>
+    <li><a href="/upload_timetable.html">📅 Upload Timetable</a></li>
+    <li><a href="#review">🧾 Review</a></li>
+    <li><a href="#download">⬇ Download Excel</a></li>
+    <li><a href="#check75">📊 Check 75%</a></li>
+    <li><button id="logoutBtn">🚪 Logout</button></li>
+  </ul>
+
+</div>
+
+  <!-- Home Section -->
+  <section class="section home" id="home">
+    <h1>Welcome, <span id="facultyName"></span></h1>
+    <div class="calendar-container">
+      <div class="calendar-header">
+        <button id="prevMonth">&#10094;</button>
+        <div id="monthYear"></div>
+        <button id="nextMonth">&#10095;</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </section>
+
+  <!-- Review Section -->
+<section class="section review hidden" id="review">
+  <h1>Attendance Review (Today)</h1>
+
+  <div class="panel-card">
+    <button class="primary-btn" id="loadReviewBtn">
+      Load Today's Attendance
+    </button>
+  </div>
+
+  <div id="presentList"></div>
+  <div id="absentList"></div>
+</section>
+
+  <!-- Profile Section -->
+  <section class="section profile hidden" id="profile">
+    <h1>Profile</h1>
+    <div class="info-card"></div>
+  </section>
+
+  <!-- Attendance Section -->
+  <section class="section attendance hidden" id="attendance">
+    <h1>Take Attendance</h1>
+    <div class="panel-card attendance-form-card">
+      <input type="text" id="courseInput" class="course-input" placeholder="Course">
+      <button class="primary-btn" id="startAttendanceBtn">Go To Attendance</button>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <!-- Download Section -->
+  <section class="section download hidden" id="download">
+    <h1>Download Attendance Sheets</h1>
+    <div class="info-card" id="downloadCourses">
+      <p>Select a course to download its attendance sheet:</p>
+      <!-- Buttons for each course will be added dynamically here -->
+    </div>
+  </section>
+
+  <!-- Check 75% Attendance Section -->
+  <section class="section check75 hidden" id="check75">
+    <h1>Check 75% Attendance</h1>
+    <div class="panel-card">
+      <input type="text" id="courseInput75" class="course-input" placeholder="Course">
+      <input type="number" id="totalClassesInput" class="course-input" placeholder="Total Number of Classes">
+      <button class="primary-btn" id="check75Btn">Check</button>
+    </div>  
+    <div id="attendance75Results"></div>
+  </section>
+
+  <script>
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function () {
+        history.pushState(null, null, location.href);
+    });
+    async function checkSession() {
+      try {
+          const res = await fetch('/api/check-session', { credentials: 'include' });
+          const data = await res.json();
+          if (!data.loggedIn) {
+              window.location.replace("/FacultyLogin.html"); // use replace to remove current page from history
+          }
+      } catch (err) {
+          console.error(err);
+          window.location.replace("/FacultyLogin.html");
+      }
+  }
+
+
+  checkSession();
+    window.onload = async () => {
+    try {
+      const res = await fetch('/api/check-session', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.loggedIn) {
+        alert('You are logged out!');
+        window.location.href = "/FacultyLogin.html"; // or StudentLogin.html
+      }
+    } catch (err) {
+      console.error(err);
+      window.location.href = "/FacultyLogin.html"; // fallback
+    }
+  };
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav-links li a');
+
+   navLinks.forEach((link) => {
+  link.addEventListener('click', (e) => {
+
+    const href = link.getAttribute('href');
+
+    // allow real routes (like /upload-timetable-page)
+    if (!href.startsWith("#")) {
+      window.location.href = href;
+      return;
+    }
+
+    // only handle section switching
+    e.preventDefault();
+
+    sections.forEach(section => section.classList.add('hidden'));
+
+    const target = document.querySelector(href);
+    if (target) target.classList.remove('hidden');
+  });
+});
+    // Calendar code
+    const calendarGrid = document.getElementById('calendarGrid');
+    const monthYear = document.getElementById('monthYear');
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    let currentDate = new Date();
+
+    function generateCalendar(date) {
+      calendarGrid.innerHTML = '';
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      monthYear.textContent = `${date.toLocaleString('default', { month: 'long' })} ${year}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      weekdays.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.textContent = day;
+        dayHeader.classList.add('day-header');
+        calendarGrid.appendChild(dayHeader);
+      });
+
+      for (let i = 0; i < firstDay; i++) {
+        const blank = document.createElement('div');
+        blank.classList.add('empty-cell');
+        calendarGrid.appendChild(blank);
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.textContent = day;
+        dayCell.classList.add('day-cell');
+
+        const today = new Date();
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+          dayCell.classList.add('today');
+        }
+
+        calendarGrid.appendChild(dayCell);
+      }
+    }
+
+    prevBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      generateCalendar(currentDate);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      generateCalendar(currentDate);
+    });
+
+    generateCalendar(currentDate);
+
+ document.getElementById("loadReviewBtn").addEventListener("click", async () => {
+
+  const facultyId = new URLSearchParams(window.location.search).get("roll");
+
+  const res = await fetch(`/api/review-attendance?facultyId=${facultyId}`);
+  const data = await res.json();
+
+  const presentDiv = document.getElementById("presentList");
+  const absentDiv = document.getElementById("absentList");
+
+  // ================= PRESENT TABLE =================
+  let presentHTML = `<h2 style="color:green; margin-top:20px;">PRESENT</h2>`;
+
+  for (let course in data.present) {
+
+    presentHTML += `
+      <h3>${course}</h3>
+      <table border="1" cellpadding="10" cellspacing="0"
+  style="width:100%; margin-bottom:20px; text-align:center; border-collapse:separate; border-spacing:10px 8px;">
+        <tr style="background:#d4f7d4;">
+          <th>Roll No</th>
+          <th>Name</th>
+        </tr>
+    `;
+
+    data.present[course].forEach(s => {
+      presentHTML += `
+        <tr>
+          <td>${s.roll}</td>
+          <td>${s.name}</td>
+        </tr>
+      `;
+    });
+
+    presentHTML += `</table>`;
+  }
+
+  // ================= ABSENT TABLE =================
+  let absentHTML = `<h2 style="color:red;">ABSENT</h2>`;
+
+  for (let course in data.absent) {
+
+    absentHTML += `
+  <h3>${course}</h3>
+  <table border="1" cellpadding="10" cellspacing="0"
+  style="width:100%; margin-bottom:20px; text-align:center; border-collapse:separate; border-spacing:10px 8px;">
+    
+    <tr style="background:#ffd6d6;">
+      <th>Roll No</th>
+      <th>Name</th>
+      <th>Action</th>
+    </tr>
+`;
+
+data.absent[course].forEach(s => {
+  absentHTML += `
+    <tr>
+      <td>${s.roll}</td>
+      <td>${s.name}</td>
+      <td>
+        <button onclick="markPresent('${s.roll}', '${course}')"
+          style="
+            padding:6px 14px;
+            background:green;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:bold;
+          ">
+          Present
+        </button>
+      </td>
+    </tr>
+  `;
+});
+
+absentHTML += `</table>`;
+  }
+
+  presentDiv.innerHTML = presentHTML;
+  absentDiv.innerHTML = absentHTML;
+});
+
+  async function markPresent(roll, course) {
+
+  const facultyId = new URLSearchParams(window.location.search).get("roll");
+
+  try {
+    const res = await fetch("/api/mark-present", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roll, course, facultyId })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Marked Present ✅");
+
+      // 🔥 reload review data instantly
+      document.getElementById("loadReviewBtn").click();
+
+    } else {
+      alert(data.error || "Failed");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+}
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+          const res = await fetch('/logout', { method: 'GET', credentials: 'include' });
+          const data = await res.json();
+          if (data.success) {
+              alert('Logged out successfully!');
+              window.location.replace("/FacultyLogin.html"); // replace instead of href
+          }
+      } catch (err) {
+          console.error(err);
+          alert('Server error while logging out');
+      }
+  });
+
+  
+    // Fetch faculty info
+    async function fetchFacultyInfo() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roll = urlParams.get('roll');
+      if (!roll) return;
+
+      try {
+        const res = await fetch(`/api/faculty/${roll}`);
+        const data = await res.json();
+        if (!data.error) {
+          document.getElementById('facultyName').textContent = data.fullname;
+          const profileCard = document.querySelector('#profile .info-card');
+          profileCard.innerHTML = `
+            <img src="${data.photo_url}" alt="${data.fullname}" class="faculty-photo">
+            <p>Name: ${data.fullname}</p>
+            <p>Faculty ID: ${data.roll}</p>
+            <p>Email: ${data.email}</p>
+            <p>Department: Computer Science</p>
+          `;
+        }
+      } catch (err) {
+        console.error("Error fetching faculty info:", err);
+      }
+    }
+
+    fetchFacultyInfo();
+
+    // Load all courses for this faculty and show download buttons
+  async function loadFacultyCourses() {
+  try {
+    const res = await fetch(`/api/faculty-courses`, {
+      credentials: 'include'
+    });
+
+    const courses = await res.json();
+
+    const container = document.getElementById('downloadCourses');
+    container.innerHTML = '<p>Select a course to download its attendance sheet:</p>';
+
+    courses.forEach(course => {
+      const btn = document.createElement('button');
+      btn.className = 'primary-btn';
+      btn.textContent = course;
+
+      btn.addEventListener('click', () => {
+        window.location.href = `/download-excel?course=${encodeURIComponent(course)}`;
+      });
+
+      container.appendChild(btn);
+    });
+
+  } catch (err) {
+    console.error("Error loading courses:", err);
+    document.getElementById('downloadCourses').innerHTML += `<p>Error fetching courses</p>`;
+  }
+}
+
+  // Call the function to populate courses
+  loadFacultyCourses();
+
+
+    document.getElementById('check75Btn').addEventListener('click', async () => {
+    const course = document.getElementById('courseInput75').value.trim();
+    const totalClasses = parseInt(document.getElementById('totalClassesInput').value.trim());
+    const urlParams = new URLSearchParams(window.location.search);
+    const facultyId = urlParams.get('roll');
+
+    if (!course) return alert("Please enter the course name");
+    if (!totalClasses || totalClasses <= 0) return alert("Please enter a valid number of classes");
+
+    try {
+      const res = await fetch(`/api/check75-attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course, facultyId, totalClasses })
+      });
+
+      const data = await res.json();
+      const container = document.getElementById('attendance75Results');
+
+      if (data.error) {
+        container.innerHTML = `<p>${data.error}</p>`;
+        return;
+      }
+
+      if (!data.length) {
+        container.innerHTML = `<p style="color:green;">All students have ≥ 75% attendance ✅</p>`;
+        return;
+      }
+
+      // Display students
+      let resultHTML = `<h3 style="color:red;">Students with < 75% attendance in ${course}:</h3>`;
+      resultHTML += `<ul>`;
+      data.forEach(student => {
+        resultHTML += `<li>${student.name} (Roll: ${student.roll}) - ${student.attendanceCount}/${totalClasses} (${student.percentage.toFixed(2)}%)</li>`;
+      });
+      resultHTML += `</ul>`;
+      container.innerHTML = resultHTML;
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('attendance75Results').innerHTML = `<p>Error fetching data</p>`;
+    }
+  });
+  </script>
+</body>
+</html>
